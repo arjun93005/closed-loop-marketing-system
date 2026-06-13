@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Snippet test page</title>
+<style>body{font-family:system-ui;max-width:640px;margin:60px auto;line-height:1.6}button{font:inherit;padding:10px 18px;border-radius:8px;border:1px solid #1E6F50;background:#1E6F50;color:#fff;cursor:pointer}code{background:#f3f4f3;padding:2px 6px;border-radius:4px}</style>
+</head>
+<body>
+<h1>Fake landing page</h1>
+<p>This page has the Loop snippet installed. Open it with UTM params to test attribution, e.g.
+<code>?utm_source=twitter&utm_campaign=test</code>, or arrive via a referrer.</p>
+<p>A <code>pageview</code> was sent on load. Click below to fire the conversion:</p>
+<button onclick="loop.track('signup');this.textContent='signup sent ✓'">Sign up</button>
+<p>Then check the dashboard at <a href="/">/</a> (site: <b>default</b>).</p>
+<script src="/loop.js" data-site="default" defer></script>
+</body>
+</html>

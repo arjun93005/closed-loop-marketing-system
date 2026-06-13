@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop — closed-loop marketing</title>
+<style>
+  :root{
+    --paper:#FAFBF7; --ink:#17221C; --muted:#66706B; --line:#DDE3DD;
+    --loop:#1E6F50; --loop-soft:#E7F1EB; --signal:#C25400; --signal-soft:#FBEFE4;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--paper);color:var(--ink);
+    font:15px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:40px 24px 80px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1,h2,.serif{font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif}
+  .num{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+  h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
+  h1 em{font-style:normal;color:var(--loop)}
+  .controls{display:flex;gap:8px}
+  select{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+
+  /* Signature: the loop strip — live state of the five stages */
+  .loopstrip{display:flex;align-items:center;gap:0;margin-bottom:36px;overflow-x:auto;padding-bottom:4px}
+  .stage{display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .stage .dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+  .stage.live .dot{background:var(--loop)}
+  .stage.attn .dot{background:var(--signal)}
+  .stage .lbl{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .stage.live .lbl{color:var(--ink);font-weight:600}
+  .stage .st{font-size:12.5px;color:var(--muted)}
+  .arrow{color:var(--line);margin:0 14px;flex:none}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:24px}
+  .reco{border-color:var(--loop);border-width:1.5px}
+  .eyebrow{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--loop);font-weight:700;margin-bottom:10px}
+  .reco h2{font-size:22px;line-height:1.3;margin-bottom:14px}
+  .why{background:var(--loop-soft);border-radius:10px;padding:14px 16px;margin:14px 0;font-size:14px}
+  .why b{color:var(--loop)}
+  .bet{font-size:15px}
+  .bet code{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+  .quiet{color:var(--muted)}
+  .empty{color:var(--muted);font-size:14.5px}
+
+  .stats{display:flex;gap:36px;margin:6px 0 20px}
+  .stat .v{font-size:24px;font-weight:600}
+  .stat .k{font-size:12.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;
+     padding:8px 12px;border-bottom:1px solid var(--line);font-weight:600}
+  th.r,td.r{text-align:right}
+  td{padding:10px 12px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  tr.hot td{background:var(--signal-soft)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--signal);
+       border:1px solid var(--signal);border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:1px}
+  .bar{display:inline-block;height:6px;background:var(--loop);border-radius:3px;vertical-align:middle;margin-right:8px;min-width:2px}
+  footer{margin-top:28px;font-size:12.5px;color:var(--muted)}
+  @media (prefers-reduced-motion:no-preference){
+    .stage.live .dot{animation:pulse 2.4s ease-in-out infinite}
+    @keyframes pulse{50%{box-shadow:0 0 0 5px rgba(30,111,80,.15)}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="serif">The <em>Loop</em></h1>
+    <div class="controls">
+      <select id="site"></select>
+      <select id="days">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="loopstrip" id="strip"></div>
+
+  <div class="card reco" id="reco"><p class="empty">Loading…</p></div>
+
+  <div class="card" id="script-card" style="display:none">
+    <div class="eyebrow">Create — here's your script</div>
+    <div id="script-display"></div>
+    <button id="btn-approve" style="margin-top:14px;padding:10px 18px;font-size:15px;font-weight:600;background:#1E6F50;color:#fff;border:none;border-radius:8px;cursor:pointer">Approve & Publish</button>
+    <p id="approve-msg" style="margin-top:8px;font-size:13px;color:var(--muted)"></p>
+  </div>
+
+  <div class="card" id="measure-card" style="display:none">
+    <div class="eyebrow">Measure — did it work?</div>
+    <div id="measure-display"></div>
+    <button id="btn-refresh-measure" style="margin-top:8px;padding:8px 12px;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:6px;cursor:pointer">Refresh</button>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--muted)">Sense — where signups come from (first-touch)</div>
+    <div class="stats" id="totals"></div>
+    <table id="sources"><tbody></tbody></table>
+  </div>
+
+  <footer>Anomaly = converts ≥2× site average with real evidence (≥20 visitors or ≥2 signups). Every number above is queryable raw data — nothing is modeled or inferred.</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const pct = x => (x*100).toFixed(1) + '%';
+
+const STAGES = ['Sense','Decide','Create','Approve','Measure'];
+
+function renderStrip(state){
+  $('#strip').innerHTML = STAGES.map((s,i)=>{
+    const cls = state[i]==='live'?'live':state[i]==='attn'?'attn':'';
+    const note = {live:'active', attn:'ready', off:'next milestone'}[state[i]||'off'];
+    return `<span class="stage ${cls}"><span class="dot"></span><span class="lbl">${s}</span><span class="st">· ${note}</span></span>`
+      + (i<4?'<span class="arrow">→</span>':'');
+  }).join('');
+}
+
+let currentScript = null;
+let currentCampaign = null;
+
+async function load(){
+  const site = $('#site').value || 'default';
+  const days = $('#days').value;
+  const [ins, reco, scriptResp] = await Promise.all([
+    fetch(`/api/insights?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json()),
+    fetch(`/api/recommendation?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json()),
+    fetch(`/api/script?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json())
+  ]);
+
+  const script = scriptResp.status === 'ok' ? scriptResp.script : null;
+  currentScript = script;
+
+  // Loop strip state
+  renderStrip([
+    ins.totals.visitors>0?'live':'off',
+    reco.status==='ok'?'attn':'off',
+    script?'attn':'off',
+    'off','off'
+  ]);
+
+  // Totals
+  $('#totals').innerHTML = `
+    <div class="stat"><div class="v num">${ins.totals.visitors}</div><div class="k">Visitors</div></div>
+    <div class="stat"><div class="v num">${ins.totals.signups}</div><div class="k">Signups</div></div>
+    <div class="stat"><div class="v num">${pct(ins.totals.rate||0)}</div><div class="k">Site conversion</div></div>`;
+
+  // Recommendation card
+  if (reco.status==='ok'){
+    const i = reco.insight, e = i.evidence;
+    $('#reco').innerHTML = `
+      <div class="eyebrow">Decide — recommended bet</div>
+      <h2 class="serif">${i.headline}</h2>
+      <div class="why"><b>Why:</b> ${i.why}</div>
+      <p class="bet"><b>Next:</b> ${i.suggestedBet.replace(/utm_source=[^ .]+/, m=>`<code>${m}</code>`)}</p>
+      <p class="quiet" style="margin-top:12px;font-size:13px">Evidence: ${e.visitors} visitors · ${e.signups} signups · ${pct(e.rate)} vs ${pct(e.siteRate)} site avg · window ${e.window}${e.topLanding?` · best landing <span class="num">${e.topLanding}</span>`:''}</p>`;
+  } else {
+    $('#reco').innerHTML = `
+      <div class="eyebrow">Decide — next bet</div>
+      <p class="empty">${reco.message||'No data yet. Install the snippet and traffic will appear here.'}</p>`;
+  }
+
+  // Script card
+  const scriptCard = $('#script-card');
+  if (script) {
+    scriptCard.style.display = 'block';
+    currentCampaign = script.utm_campaign;
+    const display = $('#script-display');
+    display.innerHTML = `
+      <div style="background:var(--loop-soft);border-radius:10px;padding:16px;margin-bottom:14px;font-size:14.5px;line-height:1.7">
+        <div style="color:var(--loop);font-weight:700;margin-bottom:8px">📝 45-second script</div>
+        <div style="margin-bottom:14px"><b>Hook:</b><br>${script.hook}</div>
+        <div style="margin-bottom:14px"><b>Body:</b><br>${script.body}</div>
+        <div><b>CTA:</b><br>${script.cta}</div>
+      </div>
+      <p style="font-size:13px;color:var(--muted)"><b>How to publish:</b> Record this script. When you post, add <code style="background:var(--paper);padding:1px 6px;border-radius:4px">${script.utm_source}</code> and <code style="background:var(--paper);padding:1px 6px;border-radius:4px">${script.utm_campaign}</code> to your link. Then check back in 7 days.</p>
+    `;
+    $('#btn-approve').onclick = approveScript;
+  } else {
+    scriptCard.style.display = 'none';
+  }
+
+  // Sources table
+  const max = Math.max(...ins.sources.map(s=>s.rate), 0.0001);
+  $('#sources tbody').innerHTML =
+    `<tr><th>Source</th><th class="r">Visitors</th><th class="r">Signups</th><th class="r">Conversion</th><th class="r">vs site</th></tr>` +
+    (ins.sources.length ? ins.sources.map(s=>`
+      <tr class="${s.anomaly?'hot':''}">
+        <td>${s.source}${s.anomaly?'<span class="tag">anomaly</span>':''}</td>
+        <td class="r num">${s.visitors}</td>
+        <td class="r num">${s.signups}</td>
+        <td class="r num"><span class="bar" style="width:${Math.round(s.rate/max*60)}px"></span>${pct(s.rate)}</td>
+        <td class="r num">${s.vsSite==null?'—':s.vsSite.toFixed(1)+'×'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="5" class="empty">No events in this window.</td></tr>`);
+}
+
+async function approveScript() {
+  if (!currentScript) return;
+  const site = $('#site').value || 'default';
+  const resp = await fetch('/api/approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ site, campaign_name: currentScript.utm_campaign })
+  }).then(r => r.json());
+  
+  $('#btn-approve').disabled = true;
+  $('#btn-approve').textContent = '✓ Approved';
+  $('#approve-msg').textContent = resp.instructions || resp.message;
+  
+  // Show measure card
+  $('#measure-card').style.display = 'block';
+  $('#btn-refresh-measure').onclick = () => checkMeasure(site, currentScript.utm_campaign);
+}
+
+async function checkMeasure(site, campaign) {
+  const resp = await fetch(`/api/measure?site=${encodeURIComponent(site)}&campaign=${encodeURIComponent(campaign)}`).then(r => r.json());
+  $('#measure-display').innerHTML = `
+    <div style="font-size:15px;margin-bottom:12px">
+      <div style="color:var(--loop);font-weight:700">${resp.attributed_signups}</div>
+      <div style="font-size:13px;color:var(--muted)">${campaign} conversions in last 7 days</div>
+    </div>
+    <p style="font-size:14px;color:var(--muted)">${resp.message}</p>
+  `;
+}
+
+async function init(){
+  // naive site list: just default for v1 (multi-site later)
+  $('#site').innerHTML = `<option value="default">default</option><option value="demo-saas">demo-saas</option>`;
+  $('#site').onchange = load; $('#days').onchange = load;
+  load();
+}
+init();
+</script>
+</body>
+</html>
