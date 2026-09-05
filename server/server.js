@@ -9,12 +9,17 @@ const express = require('express');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 
+<<<<<<< HEAD
 // Optionally load server/.env (gitignored) so secrets like ANTHROPIC_API_KEY
 // don't have to be typed inline. Silently skipped if no .env file exists.
 try { process.loadEnvFile(path.join(__dirname, '.env')); } catch { /* no .env — fine */ }
 
 const PORT = process.env.PORT || 4070;
 const DB_PATH = path.join(__dirname, 'loop.db');
+=======
+const PORT = process.env.PORT || 4070;
+const DB_PATH = process.env.LOOP_DB || path.join(__dirname, 'loop.db');
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 
 const db = new DatabaseSync(DB_PATH);
 db.exec(`
@@ -32,6 +37,7 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_events_site_ts ON events (site, ts);
   CREATE INDEX IF NOT EXISTS idx_events_vid ON events (vid);
+<<<<<<< HEAD
 
   -- Per-site GA4 forwarding config. One row per founder site, created/updated
   -- via POST /api/config. Absence of a row means "GA4 forwarding off" for that site.
@@ -62,6 +68,8 @@ db.exec(`
     approved_at  INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_bets_site ON bets (site, approved_at);
+=======
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 `);
 
 const insertEvent = db.prepare(`
@@ -72,6 +80,7 @@ const insertEvent = db.prepare(`
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
+<<<<<<< HEAD
 const getSiteConfig = db.prepare(`SELECT * FROM site_config WHERE site = ?`);
 const upsertSiteConfig = db.prepare(`
   INSERT INTO site_config (site, ga4_measurement_id, ga4_api_secret, updated_at)
@@ -169,15 +178,24 @@ function forwardToGA4(siteConfig, event) {
   // event was accepted. This is a known limitation; real verification would
   // require Google's separate (rate-limited) debug endpoint.
 }
+=======
+const app = express();
+app.use(express.json({ limit: '16kb', type: ['application/json', 'text/plain'] }));
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 
 // CORS: the snippet posts from customer sites, so /collect must accept cross-origin.
 app.use((req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*');
+<<<<<<< HEAD
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+=======
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
 
+<<<<<<< HEAD
 // ---------- Auth (single shared password) ----------
 // Set LOOP_PASSWORD to protect the dashboard and all management/read APIs. Left
 // unset (e.g. local dev), auth is OFF and everything is open — the server logs a
@@ -208,22 +226,30 @@ app.use((req, res, next) => {
   res.status(401).json({ error: 'unauthorized', hint: 'Add ?key=YOUR_PASSWORD to the URL, or send Authorization: Bearer YOUR_PASSWORD.' });
 });
 
+=======
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 // ---------- Ingestion ----------
 app.post('/collect', (req, res) => {
   const b = req.body || {};
   if (!b.site || !b.vid || !b.type) return res.status(400).json({ error: 'site, vid, type required' });
   if (String(b.vid).length > 64 || String(b.type).length > 64) return res.status(400).json({ error: 'invalid payload' });
   const ft = b.ft || {}, lt = b.lt || {};
+<<<<<<< HEAD
   const site = String(b.site).slice(0, 64);
   const ts = Number(b.ts) || Date.now();
 
   insertEvent.run(
     site, String(b.vid), String(b.type).slice(0, 64),
+=======
+  insertEvent.run(
+    String(b.site).slice(0, 64), String(b.vid), String(b.type).slice(0, 64),
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
     b.url ? String(b.url).slice(0, 512) : null,
     b.referrer ? String(b.referrer).slice(0, 512) : null,
     ft.source || null, ft.medium || null, ft.campaign || null, ft.content || null, ft.landing || null,
     lt.source || null, lt.medium || null, lt.campaign || null, lt.content || null, lt.landing || null,
     b.props ? JSON.stringify(b.props).slice(0, 2048) : null,
+<<<<<<< HEAD
     ts
   );
 
@@ -285,11 +311,17 @@ app.get('/api/config', (req, res) => {
     // ga4_api_secret intentionally omitted — never echo secrets back over GET
     updated_at: config.updated_at
   });
+=======
+    Number(b.ts) || Date.now()
+  );
+  res.status(204).end();
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 });
 
 // ---------- Insights ----------
 // Aggregates by FIRST-TOUCH source: which discovery channel produces signups.
 // A visitor counts once; they convert if they ever fired 'signup' in the window.
+<<<<<<< HEAD
 function computeInsights(site, days, conversionEvent = 'signup') {
   const since = Date.now() - days * 86400000;
   const ev = String(conversionEvent || 'signup');
@@ -297,16 +329,28 @@ function computeInsights(site, days, conversionEvent = 'signup') {
   // founder-named event like 'trial' or 'upgraded' can't inject SQL. The output
   // field stays named `signups` so all downstream code is unchanged — it now means
   // "count of the chosen conversion event".
+=======
+function computeInsights(site, days) {
+  const since = Date.now() - days * 86400000;
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   const rows = db.prepare(`
     SELECT
       COALESCE(ft_source, 'direct')   AS source,
       COUNT(DISTINCT vid)             AS visitors,
+<<<<<<< HEAD
       COUNT(DISTINCT CASE WHEN type = ? THEN vid END) AS signups
+=======
+      COUNT(DISTINCT CASE WHEN type = 'signup' THEN vid END) AS signups
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
     FROM events
     WHERE site = ? AND ts >= ?
     GROUP BY COALESCE(ft_source, 'direct')
     ORDER BY signups DESC, visitors DESC
+<<<<<<< HEAD
   `).all(ev, site, since);
+=======
+  `).all(site, since);
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 
   const totals = rows.reduce((a, r) => ({ visitors: a.visitors + r.visitors, signups: a.signups + r.signups }),
     { visitors: 0, signups: 0 });
@@ -320,7 +364,11 @@ function computeInsights(site, days, conversionEvent = 'signup') {
       signups: r.signups,
       rate,
       vsSite: siteRate > 0 ? rate / siteRate : null,
+<<<<<<< HEAD
       // anomaly: enough evidence (≥20 visitors or ≥2 conversions) and ≥2x site rate
+=======
+      // anomaly: enough evidence (≥20 visitors or ≥2 signups) and ≥2x site rate
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
       anomaly: rate >= siteRate * 2 && rate > 0 && (r.visitors >= 20 || r.signups >= 2)
     };
   });
@@ -331,6 +379,7 @@ function computeInsights(site, days, conversionEvent = 'signup') {
            COALESCE(ft_campaign,'(none)') AS campaign,
            COALESCE(ft_landing,'/') AS landing,
            COUNT(DISTINCT vid) AS visitors,
+<<<<<<< HEAD
            COUNT(DISTINCT CASE WHEN type = ? THEN vid END) AS signups
     FROM events WHERE site = ? AND ts >= ?
     GROUP BY 1, 2, 3 HAVING signups > 0
@@ -338,11 +387,21 @@ function computeInsights(site, days, conversionEvent = 'signup') {
   `).all(ev, site, since);
 
   return { site, days, conversionEvent: ev, totals: { ...totals, rate: siteRate }, sources, campaigns };
+=======
+           COUNT(DISTINCT CASE WHEN type='signup' THEN vid END) AS signups
+    FROM events WHERE site = ? AND ts >= ?
+    GROUP BY 1, 2, 3 HAVING signups > 0
+    ORDER BY signups DESC LIMIT 20
+  `).all(site, since);
+
+  return { site, days, totals: { ...totals, rate: siteRate }, sources, campaigns };
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 }
 
 app.get('/api/insights', (req, res) => {
   const site = String(req.query.site || 'default');
   const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
+<<<<<<< HEAD
   const event = req.query.event ? String(req.query.event) : 'signup';
   res.json(computeInsights(site, days, event));
 });
@@ -357,6 +416,9 @@ app.get('/api/events', (req, res) => {
     GROUP BY type ORDER BY n DESC
   `).all(site);
   res.json({ site, events: rows });
+=======
+  res.json(computeInsights(site, days));
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 });
 
 // ---------- Recommendation ----------
@@ -485,6 +547,7 @@ app.get('/api/script', (req, res) => {
   res.json({ status: 'ok', script });
 });
 
+<<<<<<< HEAD
 // ---------- Create (AI): generate NEW scripts, learning from what converted ----------
 // Cold start (few/no measured bets): AI proposes fresh scripts from the attribution
 //   insight alone. It does NOT pretend to have learned anything yet.
@@ -680,10 +743,32 @@ app.post('/api/approve', express.json(), (req, res) => {
     instructions: chanList.length
       ? 'Publish the script on each channel using that channel\'s link params below. Each is measured separately for 7 days.'
       : `Record your script. When you publish, add ${created[0].publish_link_params} to the link. Then check the bets table after 7 days.`,
+=======
+// ---------- Approve & Publish: save approval and track the bet ----------
+// In v1, approvals are ephemeral (in-memory). In production, these would be persisted.
+const approvals = {};
+
+app.post('/api/approve', express.json(), (req, res) => {
+  const { site, days, campaign_name } = req.body;
+  if (!site) return res.status(400).json({ error: 'site required' });
+  
+  const campaign = campaign_name || 'loop-bet-1';
+  const key = `${site}:${days || 30}:${campaign}`;
+  const timestamp = Date.now();
+  approvals[key] = { site, days: days || 30, campaign, approvedAt: timestamp };
+  
+  res.json({
+    status: 'approved',
+    campaign_id: key,
+    utm_source: site,
+    utm_campaign: campaign,
+    instructions: `Record your script. When you publish, add these params to the link: ?utm_source=${site}&utm_campaign=${campaign}. Then check /api/measure after 7 days.`,
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
     approvedAt: timestamp
   });
 });
 
+<<<<<<< HEAD
 // List a site's past bets with their live measured results — powers a history
 // view and lets the founder see which past scripts actually converted.
 app.get('/api/bets', (req, res) => {
@@ -704,6 +789,8 @@ app.get('/api/sites', (_req, res) => {
   res.json({ sites: rows.map(r => r.site) });
 });
 
+=======
+>>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 // ---------- Measure: count signups from a published campaign (7-day window) ----------
 app.get('/api/measure', (req, res) => {
   const { site, campaign } = req.query;
