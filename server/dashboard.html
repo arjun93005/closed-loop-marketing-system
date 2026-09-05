@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop — closed-loop marketing</title>
+<style>
+  :root{
+    --paper:#FAFBF7; --ink:#17221C; --muted:#66706B; --line:#DDE3DD;
+    --loop:#1E6F50; --loop-soft:#E7F1EB; --signal:#C25400; --signal-soft:#FBEFE4;
+    --card:#FFFFFF;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{background:var(--paper);color:var(--ink);
+    font:15px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:40px 24px 80px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1,h2,h3,.serif{font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif}
+  .num{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+  h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
+  h1 em{font-style:normal;color:var(--loop)}
+  .controls{display:flex;gap:8px}
+  select,input[type=text],input[type=password]{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+
+  /* Signature: the loop strip — live state of the five stages */
+  .loopstrip{display:flex;align-items:center;gap:0;margin-bottom:36px;overflow-x:auto;padding-bottom:4px}
+  .stage{display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .stage .dot{width:9px;height:9px;border-radius:50%;background:var(--line);flex:none}
+  .stage.live .dot{background:var(--loop)}
+  .stage.attn .dot{background:var(--signal)}
+  .stage .lbl{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+  .stage.live .lbl,.stage.attn .lbl{color:var(--ink);font-weight:600}
+  .stage .st{font-size:12.5px;color:var(--muted)}
+  .arrow{color:var(--line);margin:0 14px;flex:none}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:24px}
+  .reco{border-color:var(--loop);border-width:1.5px}
+  .eyebrow{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--loop);font-weight:700;margin-bottom:10px}
+  .eyebrow.quiet{color:var(--muted)}
+  .reco h2{font-size:22px;line-height:1.3;margin-bottom:14px}
+  .why{background:var(--loop-soft);border-radius:10px;padding:14px 16px;margin:14px 0;font-size:14px}
+  .why b{color:var(--loop)}
+  .bet{font-size:15px}
+  code{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
+  .quiet{color:var(--muted)}
+  .empty{color:var(--muted);font-size:14.5px}
+
+  .stats{display:flex;gap:36px;margin:6px 0 20px}
+  .stat .v{font-size:24px;font-weight:600}
+  .stat .k{font-size:12.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;
+     padding:8px 12px;border-bottom:1px solid var(--line);font-weight:600}
+  th.r,td.r{text-align:right}
+  td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr.hot td{background:var(--signal-soft)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--signal);
+       border:1px solid var(--signal);border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:1px}
+  .mode{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;border-radius:999px;padding:2px 10px;margin-left:10px;vertical-align:2px}
+  .mode.cold{color:var(--muted);border:1px solid var(--line)}
+  .mode.warm{color:var(--loop);border:1px solid var(--loop)}
+  .bar{display:inline-block;height:6px;background:var(--loop);border-radius:3px;vertical-align:middle;margin-right:8px;min-width:2px}
+
+  /* Script variant cards */
+  .variants{display:grid;gap:14px;margin-top:14px}
+  .variant{border:1px solid var(--line);border-radius:10px;padding:16px}
+  .variant h3{font-size:16px;margin-bottom:8px}
+  .variant p{font-size:14px;margin:6px 0}
+  .variant .part{color:var(--loop);font-weight:600}
+  .variant .rationale{font-size:12.5px;color:var(--muted);margin-top:8px}
+  button{font:inherit;padding:9px 16px;border-radius:8px;border:1px solid var(--loop);background:var(--loop);color:#fff;cursor:pointer;font-weight:600;font-size:14px}
+  button.ghost{background:transparent;color:var(--loop)}
+  button:disabled{opacity:.55;cursor:default}
+  .approved-note{margin-top:10px;font-size:13px;background:var(--loop-soft);border-radius:8px;padding:10px 12px}
+
+  details.settings{margin-bottom:24px}
+  details.settings summary{cursor:pointer;font-size:13px;color:var(--muted)}
+  details.settings .card{margin-top:10px;margin-bottom:0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  footer{margin-top:28px;font-size:12.5px;color:var(--muted)}
+  @media (prefers-reduced-motion:no-preference){
+    .stage.live .dot{animation:pulse 2.4s ease-in-out infinite}
+    @keyframes pulse{50%{box-shadow:0 0 0 5px rgba(30,111,80,.15)}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 class="serif">The <em>Loop</em></h1>
+    <div class="controls">
+      <select id="site" aria-label="Site"></select>
+      <select id="days" aria-label="Time window">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+      <select id="event" aria-label="Conversion event" title="Which event counts as a conversion">
+        <option value="signup">signup</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="loopstrip" id="strip"></div>
+
+  <div class="card reco" id="reco"><p class="empty">Loading…</p></div>
+
+  <div class="card" id="create-card" style="display:none">
+    <div class="eyebrow">Create — script ideas<span id="mode-badge"></span></div>
+    <div id="research"></div>
+    <div class="variants" id="variants"></div>
+  </div>
+
+  <div class="card" id="bets-card" style="display:none">
+    <div class="eyebrow quiet">Approve &amp; Measure — your past bets, results recomputed live</div>
+    <table id="bets"><tbody></tbody></table>
+    <p class="quiet" style="margin-top:10px;font-size:13px">Each bet is measured for 7 days after approval by counting signups whose last-touch campaign matches its <code>utm_campaign</code>.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow quiet">Sense — where signups come from (first-touch)</div>
+    <div class="stats" id="totals"></div>
+    <table id="sources"><tbody></tbody></table>
+  </div>
+
+  <details class="settings">
+    <summary>GA4 forwarding settings (optional)</summary>
+    <div class="card">
+      <p class="quiet" style="font-size:13.5px">If set, every event is also forwarded server-side to your GA4 property. Loop's own data stays the source of truth; the secret is stored server-side only and never shown again.</p>
+      <div class="row">
+        <input type="text" id="ga4-id" placeholder="Measurement ID (G-XXXXXXX)" size="24">
+        <input type="password" id="ga4-secret" placeholder="API secret" size="24">
+        <button class="ghost" id="ga4-save">Save GA4 settings</button>
+        <span id="ga4-status" class="quiet" style="font-size:13px"></span>
+      </div>
+    </div>
+  </details>
+
+  <footer>Anomaly = converts ≥2× site average with real evidence (≥20 visitors or ≥2 signups). Every number above is queryable raw data — nothing is modeled or inferred.</footer>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+
+// Auth: if the dashboard was opened with ?key=..., carry that password on every
+// same-origin API request (as a Bearer header) so protected endpoints accept it.
+// No key in the URL (local dev with auth off) → requests go out unchanged.
+const LOOP_KEY = new URLSearchParams(location.search).get('key');
+if (LOOP_KEY) {
+  const _fetch = window.fetch.bind(window);
+  window.fetch = (url, opts = {}) => {
+    const sameOrigin = typeof url === 'string' && (url.startsWith('/') || url.startsWith(location.origin));
+    if (!sameOrigin) return _fetch(url, opts);
+    const headers = new Headers(opts.headers || {});
+    if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + LOOP_KEY);
+    return _fetch(url, { ...opts, headers });
+  };
+}
+const pct = x => (x*100).toFixed(1) + '%';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const STAGES = ['Sense','Decide','Create','Approve','Measure'];
+let currentSource = null, currentLanding = null;
+
+function renderStrip(state){
+  $('#strip').innerHTML = STAGES.map((s,i)=>{
+    const cls = state[i]==='live'?'live':state[i]==='attn'?'attn':'';
+    const note = {live:'active', attn:'ready', off:'waiting'}[state[i]||'off'];
+    return `<span class="stage ${cls}"><span class="dot"></span><span class="lbl">${s}</span><span class="st">· ${note}</span></span>`
+      + (i<4?'<span class="arrow">→</span>':'');
+  }).join('');
+}
+
+async function loadSites(){
+  const r = await fetch('/api/sites').then(r=>r.json()).catch(()=>({sites:[]}));
+  const sites = r.sites.length ? r.sites : ['default'];
+  $('#site').innerHTML = sites.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  if (sites.includes('demo-saas')) $('#site').value = 'demo-saas';
+}
+
+// Fill the conversion-event picker with the event types this site actually has
+// (minus 'pageview', which is the denominator, not a conversion). Keeps the
+// current choice if still valid, else defaults to signup.
+async function loadEvents(){
+  const site = $('#site').value || 'default';
+  const prev = $('#event').value || 'signup';
+  const r = await fetch(`/api/events?site=${encodeURIComponent(site)}`).then(r=>r.json()).catch(()=>({events:[]}));
+  const types = (r.events||[]).map(e=>e.type).filter(t=>t!=='pageview');
+  if (!types.includes('signup')) types.unshift('signup');
+  $('#event').innerHTML = types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  $('#event').value = types.includes(prev) ? prev : 'signup';
+}
+
+async function load(){
+  const site = $('#site').value || 'default';
+  const days = $('#days').value;
+  const event = $('#event').value || 'signup';
+  const evParam = `&event=${encodeURIComponent(event)}`;
+  const [ins, reco, betsResp] = await Promise.all([
+    fetch(`/api/insights?site=${encodeURIComponent(site)}&days=${days}${evParam}`).then(r=>r.json()),
+    fetch(`/api/recommendation?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json()),
+    fetch(`/api/bets?site=${encodeURIComponent(site)}`).then(r=>r.json())
+  ]);
+  const bets = betsResp.bets || [];
+  const measuredTotal = bets.reduce((a,b)=>a+b.measured_signups,0);
+
+  renderStrip([
+    ins.totals.visitors>0?'live':'off',
+    reco.status==='ok'?'attn':'off',
+    'off',                                  // Create lights up when scripts arrive
+    bets.length?'live':'off',
+    measuredTotal>0?'live':(bets.length?'attn':'off')
+  ]);
+
+  $('#totals').innerHTML = `
+    <div class="stat"><div class="v num">${ins.totals.visitors}</div><div class="k">Visitors</div></div>
+    <div class="stat"><div class="v num">${ins.totals.signups}</div><div class="k">Signups</div></div>
+    <div class="stat"><div class="v num">${pct(ins.totals.rate||0)}</div><div class="k">Site conversion</div></div>`;
+
+  if (reco.status==='ok'){
+    const i = reco.insight, e = i.evidence;
+    currentSource = e.source; currentLanding = e.topLanding || null;
+    $('#reco').innerHTML = `
+      <div class="eyebrow">Decide — recommended bet</div>
+      <h2 class="serif">${esc(i.headline)}</h2>
+      <div class="why"><b>Why:</b> ${esc(i.why)}</div>
+      <p class="quiet" style="font-size:13px">Evidence: ${e.visitors} visitors · ${e.signups} signups · ${pct(e.rate)} vs ${pct(e.siteRate)} site avg · window ${e.window}${e.topLanding?` · best landing <span class="num">${esc(e.topLanding)}</span>`:''}</p>`;
+  } else {
+    currentSource = null;
+    $('#reco').innerHTML = `
+      <div class="eyebrow">Decide — next bet</div>
+      <p class="empty">${esc(reco.message||'No data yet. Install the snippet and traffic will appear here.')}</p>`;
+  }
+
+  renderBets(bets);
+  renderSources(ins);
+  loadScripts(site, days, reco.status==='ok');   // async — fills Create card when ready
+}
+
+function renderSources(ins){
+  const max = Math.max(...ins.sources.map(s=>s.rate), 0.0001);
+  $('#sources tbody').innerHTML =
+    `<tr><th>Source</th><th class="r">Visitors</th><th class="r">Signups</th><th class="r">Conversion</th><th class="r">vs site</th></tr>` +
+    (ins.sources.length ? ins.sources.map(s=>`
+      <tr class="${s.anomaly?'hot':''}">
+        <td>${esc(s.source)}${s.anomaly?'<span class="tag">anomaly</span>':''}</td>
+        <td class="r num">${s.visitors}</td>
+        <td class="r num">${s.signups}</td>
+        <td class="r num"><span class="bar" style="width:${Math.round(s.rate/max*60)}px"></span>${pct(s.rate)}</td>
+        <td class="r num">${s.vsSite==null?'—':s.vsSite.toFixed(1)+'×'}</td>
+      </tr>`).join('')
+    : `<tr><td colspan="5" class="empty">No events in this window.</td></tr>`);
+}
+
+function renderBets(bets){
+  const card = $('#bets-card');
+  if (!bets.length){ card.style.display='none'; return; }
+  card.style.display='block';
+  $('#bets tbody').innerHTML =
+    `<tr><th>Campaign</th><th>Source</th><th>Angle</th><th>Approved</th><th class="r">Signups (7d)</th></tr>` +
+    bets.slice().reverse().map(b=>`
+      <tr>
+        <td class="num">${esc(b.campaign)}</td>
+        <td>${esc(b.source||'—')}</td>
+        <td>${esc(b.angle||'—')}</td>
+        <td class="num">${new Date(b.approved_at).toISOString().slice(0,10)}</td>
+        <td class="r num">${b.measured_signups}</td>
+      </tr>`).join('');
+}
+
+async function loadScripts(site, days, haveReco){
+  const card = $('#create-card');
+  if (!haveReco){ card.style.display='none'; return; }
+  card.style.display='block';
+  $('#mode-badge').innerHTML = '';
+  $('#research').innerHTML = '<p class="empty">Generating script ideas…</p>';
+  $('#variants').innerHTML = '';
+
+  let out = await fetch(`/api/generate-scripts?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json()).catch(()=>null);
+
+  if (out && out.status==='ok'){
+    $('#mode-badge').innerHTML = out.mode==='warm'
+      ? '<span class="mode warm">warm · learning from your results</span>'
+      : '<span class="mode cold">cold start · hypotheses to test</span>';
+    $('#research').innerHTML = `<div class="why"><b>Research summary:</b> ${esc(out.research_summary)}</div>`;
+    renderVariants(site, out.scripts, out.source, out.suggested_landing);
+    document.querySelectorAll('.stage')[2].classList.add('attn');
+    return;
+  }
+
+  // AI unavailable or errored → fall back to the template script, honestly labeled.
+  const t = await fetch(`/api/script?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json()).catch(()=>null);
+  if (t && t.status==='ok'){
+    const note = out && out.status==='ai_unavailable'
+      ? 'AI generation is off (no ANTHROPIC_API_KEY on the server) — showing the built-in template script instead.'
+      : 'AI generation failed — showing the built-in template script instead.';
+    $('#mode-badge').innerHTML = '<span class="mode cold">template</span>';
+    $('#research').innerHTML = `<p class="quiet" style="font-size:13.5px">${esc(note)}</p>`;
+    renderVariants(site, [{angle:'Data story (template)', hook:t.script.hook, body:t.script.body, cta:t.script.cta}], t.script.utm_source, null);
+    document.querySelectorAll('.stage')[2].classList.add('attn');
+  } else {
+    $('#research').innerHTML = `<p class="empty">${esc((t&&t.reason)||'Not enough data to generate scripts yet.')}</p>`;
+  }
+}
+
+function renderVariants(site, scripts, source, landing){
+  const CHANNELS = ['reddit','x','linkedin','youtube','tiktok'];
+  $('#variants').innerHTML = scripts.map((s,i)=>`
+    <div class="variant" id="variant-${i}">
+      <h3 class="serif">${esc(s.angle||('Idea '+(i+1)))}</h3>
+      <p><span class="part">Hook:</span> ${esc(s.hook)}</p>
+      <p><span class="part">Body:</span> ${esc(s.body)}</p>
+      <p><span class="part">CTA:</span> ${esc(s.cta)}</p>
+      ${s.rationale?`<p class="rationale">Why this: ${esc(s.rationale)}</p>`:''}
+      <div class="row" style="margin-top:10px">
+        <span class="quiet" style="font-size:12.5px">Publish to:</span>
+        ${CHANNELS.map(ch=>`<label style="font-size:13px;display:inline-flex;align-items:center;gap:4px"><input type="checkbox" class="chan" data-ch="${ch}"${ch===(source||'').replace('.com','')?' checked':''}> ${ch}</label>`).join('')}
+      </div>
+      <div class="row"><button data-i="${i}">Approve &amp; create bets</button></div>
+      <div class="approved-note" style="display:none"></div>
+    </div>`).join('');
+
+  document.querySelectorAll('#variants button').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const s = scripts[Number(btn.dataset.i)];
+      const variant = btn.closest('.variant');
+      const channels = [...variant.querySelectorAll('.chan:checked')].map(c=>c.dataset.ch);
+      btn.disabled = true;
+      const resp = await fetch('/api/approve', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ site, source, landing, angle:s.angle, hook:s.hook, body:s.body, cta:s.cta, channels })
+      }).then(r=>r.json()).catch(()=>null);
+      const note = variant.querySelector('.approved-note');
+      if (resp && resp.status==='approved'){
+        btn.textContent = 'Approved';
+        note.style.display='block';
+        const lines = (resp.bets||[]).map(b=>`<div><b>${esc(b.channel)}</b>: <code>${esc(b.publish_link_params)}</code></div>`).join('');
+        note.innerHTML = `${resp.multi_channel?'Created one bet per channel — each measured separately for 7 days:':'Publish with these link params, measured for 7 days:'}<div style="margin-top:6px">${lines}</div>`;
+        const bets = await fetch(`/api/bets?site=${encodeURIComponent(site)}`).then(r=>r.json());
+        renderBets(bets.bets||[]);
+      } else {
+        btn.disabled = false;
+        note.style.display='block';
+        note.textContent = 'Approval failed — is the server running?';
+      }
+    };
+  });
+}
+
+async function loadGa4(){
+  const site = $('#site').value || 'default';
+  const c = await fetch(`/api/config?site=${encodeURIComponent(site)}`).then(r=>r.json()).catch(()=>null);
+  $('#ga4-status').textContent = c && c.ga4_enabled ? `Enabled for ${site} (${c.ga4_measurement_id})` : `Off for ${site}`;
+  $('#ga4-id').value = (c && c.ga4_measurement_id) || '';
+  $('#ga4-secret').value = '';
+}
+
+$('#ga4-save').onclick = async ()=>{
+  const site = $('#site').value || 'default';
+  const r = await fetch('/api/config', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ site, ga4_measurement_id: $('#ga4-id').value.trim(), ga4_api_secret: $('#ga4-secret').value.trim() })
+  }).then(r=>r.json()).catch(()=>null);
+  $('#ga4-status').textContent = r ? (r.error ? `Not saved: ${r.error}` : r.note) : 'Save failed — is the server running?';
+  if (r && !r.error) loadGa4();
+};
+
+async function init(){
+  await loadSites();
+  await loadEvents();
+  $('#site').onchange = async ()=>{ await loadEvents(); load(); loadGa4(); };
+  $('#days').onchange = load;
+  $('#event').onchange = load;
+  load(); loadGa4();
+}
+init();
+</script>
+</body>
+</html>

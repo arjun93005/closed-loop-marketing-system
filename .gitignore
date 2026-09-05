@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Local database (data, not code — never commit)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor noise
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

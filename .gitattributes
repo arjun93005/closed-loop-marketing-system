@@ -1,0 +1,4 @@
+# Normalize line endings: LF in the repo, native in your working copy.
+# Without this, Windows CRLF vs Linux LF shows up as phantom "whole file changed" diffs.
+* text=auto eol=lf
+*.db binary
