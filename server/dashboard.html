@@ -15,22 +15,14 @@
     font:15px/1.55 -apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     padding:40px 24px 80px}
   .wrap{max-width:880px;margin:0 auto}
-<<<<<<< HEAD
   h1,h2,h3,.serif{font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif}
-=======
-  h1,h2,.serif{font-family:"Iowan Old Style",Palatino,"Palatino Linotype",Georgia,serif}
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   .num{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
 
   header{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
   h1{font-size:26px;font-weight:600;letter-spacing:-.01em}
   h1 em{font-style:normal;color:var(--loop)}
   .controls{display:flex;gap:8px}
-<<<<<<< HEAD
   select,input[type=text],input[type=password]{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
-=======
-  select{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 
   /* Signature: the loop strip — live state of the five stages */
   .loopstrip{display:flex;align-items:center;gap:0;margin-bottom:36px;overflow-x:auto;padding-bottom:4px}
@@ -39,30 +31,19 @@
   .stage.live .dot{background:var(--loop)}
   .stage.attn .dot{background:var(--signal)}
   .stage .lbl{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
-<<<<<<< HEAD
   .stage.live .lbl,.stage.attn .lbl{color:var(--ink);font-weight:600}
-=======
-  .stage.live .lbl{color:var(--ink);font-weight:600}
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   .stage .st{font-size:12.5px;color:var(--muted)}
   .arrow{color:var(--line);margin:0 14px;flex:none}
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:24px}
   .reco{border-color:var(--loop);border-width:1.5px}
   .eyebrow{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--loop);font-weight:700;margin-bottom:10px}
-<<<<<<< HEAD
   .eyebrow.quiet{color:var(--muted)}
-=======
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   .reco h2{font-size:22px;line-height:1.3;margin-bottom:14px}
   .why{background:var(--loop-soft);border-radius:10px;padding:14px 16px;margin:14px 0;font-size:14px}
   .why b{color:var(--loop)}
   .bet{font-size:15px}
-<<<<<<< HEAD
   code{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
-=======
-  .bet code{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:13px}
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   .quiet{color:var(--muted)}
   .empty{color:var(--muted);font-size:14.5px}
 
@@ -74,16 +55,11 @@
   th{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;
      padding:8px 12px;border-bottom:1px solid var(--line);font-weight:600}
   th.r,td.r{text-align:right}
-<<<<<<< HEAD
   td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
-=======
-  td{padding:10px 12px;border-bottom:1px solid var(--line)}
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   tr:last-child td{border-bottom:none}
   tr.hot td{background:var(--signal-soft)}
   .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--signal);
        border:1px solid var(--signal);border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:1px}
-<<<<<<< HEAD
   .mode{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.05em;border-radius:999px;padding:2px 10px;margin-left:10px;vertical-align:2px}
   .mode.cold{color:var(--muted);border:1px solid var(--line)}
   .mode.warm{color:var(--loop);border:1px solid var(--loop)}
@@ -105,9 +81,6 @@
   details.settings summary{cursor:pointer;font-size:13px;color:var(--muted)}
   details.settings .card{margin-top:10px;margin-bottom:0}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
-=======
-  .bar{display:inline-block;height:6px;background:var(--loop);border-radius:3px;vertical-align:middle;margin-right:8px;min-width:2px}
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   footer{margin-top:28px;font-size:12.5px;color:var(--muted)}
   @media (prefers-reduced-motion:no-preference){
     .stage.live .dot{animation:pulse 2.4s ease-in-out infinite}
@@ -120,23 +93,15 @@
   <header>
     <h1 class="serif">The <em>Loop</em></h1>
     <div class="controls">
-<<<<<<< HEAD
       <select id="site" aria-label="Site"></select>
       <select id="days" aria-label="Time window">
-=======
-      <select id="site"></select>
-      <select id="days">
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
         <option value="7">Last 7 days</option>
         <option value="30" selected>Last 30 days</option>
         <option value="90">Last 90 days</option>
       </select>
-<<<<<<< HEAD
       <select id="event" aria-label="Conversion event" title="Which event counts as a conversion">
         <option value="signup">signup</option>
       </select>
-=======
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
     </div>
   </header>
 
@@ -144,7 +109,6 @@
 
   <div class="card reco" id="reco"><p class="empty">Loading…</p></div>
 
-<<<<<<< HEAD
   <div class="card" id="create-card" style="display:none">
     <div class="eyebrow">Create — script ideas<span id="mode-badge"></span></div>
     <div id="research"></div>
@@ -159,28 +123,10 @@
 
   <div class="card">
     <div class="eyebrow quiet">Sense — where signups come from (first-touch)</div>
-=======
-  <div class="card" id="script-card" style="display:none">
-    <div class="eyebrow">Create — here's your script</div>
-    <div id="script-display"></div>
-    <button id="btn-approve" style="margin-top:14px;padding:10px 18px;font-size:15px;font-weight:600;background:#1E6F50;color:#fff;border:none;border-radius:8px;cursor:pointer">Approve & Publish</button>
-    <p id="approve-msg" style="margin-top:8px;font-size:13px;color:var(--muted)"></p>
-  </div>
-
-  <div class="card" id="measure-card" style="display:none">
-    <div class="eyebrow">Measure — did it work?</div>
-    <div id="measure-display"></div>
-    <button id="btn-refresh-measure" style="margin-top:8px;padding:8px 12px;font-size:13px;background:var(--paper);border:1px solid var(--line);border-radius:6px;cursor:pointer">Refresh</button>
-  </div>
-
-  <div class="card">
-    <div class="eyebrow" style="color:var(--muted)">Sense — where signups come from (first-touch)</div>
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
     <div class="stats" id="totals"></div>
     <table id="sources"><tbody></tbody></table>
   </div>
 
-<<<<<<< HEAD
   <details class="settings">
     <summary>GA4 forwarding settings (optional)</summary>
     <div class="card">
@@ -194,14 +140,11 @@
     </div>
   </details>
 
-=======
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   <footer>Anomaly = converts ≥2× site average with real evidence (≥20 visitors or ≥2 signups). Every number above is queryable raw data — nothing is modeled or inferred.</footer>
 </div>
 
 <script>
 const $ = s => document.querySelector(s);
-<<<<<<< HEAD
 
 // Auth: if the dashboard was opened with ?key=..., carry that password on every
 // same-origin API request (as a Bearer header) so protected endpoints accept it.
@@ -221,26 +164,16 @@ const pct = x => (x*100).toFixed(1) + '%';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const STAGES = ['Sense','Decide','Create','Approve','Measure'];
 let currentSource = null, currentLanding = null;
-=======
-const pct = x => (x*100).toFixed(1) + '%';
-
-const STAGES = ['Sense','Decide','Create','Approve','Measure'];
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 
 function renderStrip(state){
   $('#strip').innerHTML = STAGES.map((s,i)=>{
     const cls = state[i]==='live'?'live':state[i]==='attn'?'attn':'';
-<<<<<<< HEAD
     const note = {live:'active', attn:'ready', off:'waiting'}[state[i]||'off'];
-=======
-    const note = {live:'active', attn:'ready', off:'next milestone'}[state[i]||'off'];
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
     return `<span class="stage ${cls}"><span class="dot"></span><span class="lbl">${s}</span><span class="st">· ${note}</span></span>`
       + (i<4?'<span class="arrow">→</span>':'');
   }).join('');
 }
 
-<<<<<<< HEAD
 async function loadSites(){
   const r = await fetch('/api/sites').then(r=>r.json()).catch(()=>({sites:[]}));
   const sites = r.sites.length ? r.sites : ['default'];
@@ -260,15 +193,10 @@ async function loadEvents(){
   $('#event').innerHTML = types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
   $('#event').value = types.includes(prev) ? prev : 'signup';
 }
-=======
-let currentScript = null;
-let currentCampaign = null;
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 
 async function load(){
   const site = $('#site').value || 'default';
   const days = $('#days').value;
-<<<<<<< HEAD
   const event = $('#event').value || 'signup';
   const evParam = `&event=${encodeURIComponent(event)}`;
   const [ins, reco, betsResp] = await Promise.all([
@@ -287,32 +215,11 @@ async function load(){
     measuredTotal>0?'live':(bets.length?'attn':'off')
   ]);
 
-=======
-  const [ins, reco, scriptResp] = await Promise.all([
-    fetch(`/api/insights?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json()),
-    fetch(`/api/recommendation?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json()),
-    fetch(`/api/script?site=${encodeURIComponent(site)}&days=${days}`).then(r=>r.json())
-  ]);
-
-  const script = scriptResp.status === 'ok' ? scriptResp.script : null;
-  currentScript = script;
-
-  // Loop strip state
-  renderStrip([
-    ins.totals.visitors>0?'live':'off',
-    reco.status==='ok'?'attn':'off',
-    script?'attn':'off',
-    'off','off'
-  ]);
-
-  // Totals
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   $('#totals').innerHTML = `
     <div class="stat"><div class="v num">${ins.totals.visitors}</div><div class="k">Visitors</div></div>
     <div class="stat"><div class="v num">${ins.totals.signups}</div><div class="k">Signups</div></div>
     <div class="stat"><div class="v num">${pct(ins.totals.rate||0)}</div><div class="k">Site conversion</div></div>`;
 
-<<<<<<< HEAD
   if (reco.status==='ok'){
     const i = reco.insight, e = i.evidence;
     currentSource = e.source; currentLanding = e.topLanding || null;
@@ -334,54 +241,12 @@ async function load(){
 }
 
 function renderSources(ins){
-=======
-  // Recommendation card
-  if (reco.status==='ok'){
-    const i = reco.insight, e = i.evidence;
-    $('#reco').innerHTML = `
-      <div class="eyebrow">Decide — recommended bet</div>
-      <h2 class="serif">${i.headline}</h2>
-      <div class="why"><b>Why:</b> ${i.why}</div>
-      <p class="bet"><b>Next:</b> ${i.suggestedBet.replace(/utm_source=[^ .]+/, m=>`<code>${m}</code>`)}</p>
-      <p class="quiet" style="margin-top:12px;font-size:13px">Evidence: ${e.visitors} visitors · ${e.signups} signups · ${pct(e.rate)} vs ${pct(e.siteRate)} site avg · window ${e.window}${e.topLanding?` · best landing <span class="num">${e.topLanding}</span>`:''}</p>`;
-  } else {
-    $('#reco').innerHTML = `
-      <div class="eyebrow">Decide — next bet</div>
-      <p class="empty">${reco.message||'No data yet. Install the snippet and traffic will appear here.'}</p>`;
-  }
-
-  // Script card
-  const scriptCard = $('#script-card');
-  if (script) {
-    scriptCard.style.display = 'block';
-    currentCampaign = script.utm_campaign;
-    const display = $('#script-display');
-    display.innerHTML = `
-      <div style="background:var(--loop-soft);border-radius:10px;padding:16px;margin-bottom:14px;font-size:14.5px;line-height:1.7">
-        <div style="color:var(--loop);font-weight:700;margin-bottom:8px">📝 45-second script</div>
-        <div style="margin-bottom:14px"><b>Hook:</b><br>${script.hook}</div>
-        <div style="margin-bottom:14px"><b>Body:</b><br>${script.body}</div>
-        <div><b>CTA:</b><br>${script.cta}</div>
-      </div>
-      <p style="font-size:13px;color:var(--muted)"><b>How to publish:</b> Record this script. When you post, add <code style="background:var(--paper);padding:1px 6px;border-radius:4px">${script.utm_source}</code> and <code style="background:var(--paper);padding:1px 6px;border-radius:4px">${script.utm_campaign}</code> to your link. Then check back in 7 days.</p>
-    `;
-    $('#btn-approve').onclick = approveScript;
-  } else {
-    scriptCard.style.display = 'none';
-  }
-
-  // Sources table
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
   const max = Math.max(...ins.sources.map(s=>s.rate), 0.0001);
   $('#sources tbody').innerHTML =
     `<tr><th>Source</th><th class="r">Visitors</th><th class="r">Signups</th><th class="r">Conversion</th><th class="r">vs site</th></tr>` +
     (ins.sources.length ? ins.sources.map(s=>`
       <tr class="${s.anomaly?'hot':''}">
-<<<<<<< HEAD
         <td>${esc(s.source)}${s.anomaly?'<span class="tag">anomaly</span>':''}</td>
-=======
-        <td>${s.source}${s.anomaly?'<span class="tag">anomaly</span>':''}</td>
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
         <td class="r num">${s.visitors}</td>
         <td class="r num">${s.signups}</td>
         <td class="r num"><span class="bar" style="width:${Math.round(s.rate/max*60)}px"></span>${pct(s.rate)}</td>
@@ -390,7 +255,6 @@ function renderSources(ins){
     : `<tr><td colspan="5" class="empty">No events in this window.</td></tr>`);
 }
 
-<<<<<<< HEAD
 function renderBets(bets){
   const card = $('#bets-card');
   if (!bets.length){ card.style.display='none'; return; }
@@ -511,42 +375,6 @@ async function init(){
   $('#days').onchange = load;
   $('#event').onchange = load;
   load(); loadGa4();
-=======
-async function approveScript() {
-  if (!currentScript) return;
-  const site = $('#site').value || 'default';
-  const resp = await fetch('/api/approve', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ site, campaign_name: currentScript.utm_campaign })
-  }).then(r => r.json());
-  
-  $('#btn-approve').disabled = true;
-  $('#btn-approve').textContent = '✓ Approved';
-  $('#approve-msg').textContent = resp.instructions || resp.message;
-  
-  // Show measure card
-  $('#measure-card').style.display = 'block';
-  $('#btn-refresh-measure').onclick = () => checkMeasure(site, currentScript.utm_campaign);
-}
-
-async function checkMeasure(site, campaign) {
-  const resp = await fetch(`/api/measure?site=${encodeURIComponent(site)}&campaign=${encodeURIComponent(campaign)}`).then(r => r.json());
-  $('#measure-display').innerHTML = `
-    <div style="font-size:15px;margin-bottom:12px">
-      <div style="color:var(--loop);font-weight:700">${resp.attributed_signups}</div>
-      <div style="font-size:13px;color:var(--muted)">${campaign} conversions in last 7 days</div>
-    </div>
-    <p style="font-size:14px;color:var(--muted)">${resp.message}</p>
-  `;
-}
-
-async function init(){
-  // naive site list: just default for v1 (multi-site later)
-  $('#site').innerHTML = `<option value="default">default</option><option value="demo-saas">demo-saas</option>`;
-  $('#site').onchange = load; $('#days').onchange = load;
-  load();
->>>>>>> 853c022efcecff3822ce1a5a43bba8e5890ad6f3
 }
 init();
 </script>
