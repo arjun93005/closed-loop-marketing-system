@@ -9,12 +9,50 @@ Set these in your host's env/secrets panel (never commit them):
 
 | Variable | Purpose | Required? |
 |---|---|---|
-| `LOOP_PASSWORD` | Protects the dashboard + all management/read APIs. Without it, everything is open. | **Yes for any public deploy** |
+| `NODE_ENV` | `development`, `production` or `test`. Setting `production` turns on the strict checks below. | **Yes for any public deploy** |
+| `LOOP_PASSWORD` | Protects the dashboard + all management/read APIs. Min 16 chars in production. | **Yes** (enforced when `NODE_ENV=production`) |
+| `LOOP_DB` | Path to the SQLite file. Point it at your persistent disk mount. | **Strongly recommended** |
 | `ANTHROPIC_API_KEY` | Enables AI script generation. Without it, the template script is used. | Optional |
 | `PORT` | Port to listen on (many hosts set this automatically). | Host-dependent |
-| `LOOP_DB` | Path to the SQLite file. Point it at your persistent disk mount. | Recommended |
 
-Locally you can instead put these in `server/.env` (already gitignored):
+### Configuration is validated at boot
+
+All of these are read, validated and frozen in one place — `server/config.js`. Nothing
+else in the app touches `process.env`. If anything is wrong the server prints every
+problem at once and **exits with code 1** rather than starting in a broken state:
+
+```
+Invalid configuration — the server cannot start:
+  ✗ LOOP_PASSWORD is required when NODE_ENV=production. Without it the dashboard
+    and all /api/* routes would be publicly readable and writable.
+```
+
+A non-zero exit is what makes your host mark the deploy as failed instead of routing
+live traffic at it. Specifically, the server refuses to start when:
+
+- `NODE_ENV` is not one of the three known values (catches typos like `prodution`),
+- `PORT` is not an integer in 1–65535,
+- `NODE_ENV=production` and `LOOP_PASSWORD` is missing or under 16 characters,
+- `LOOP_DB`’s parent directory does not exist — which is how you learn the persistent
+  volume was never mounted **before** losing data rather than after.
+
+On boot it prints the effective settings, with secrets shown as present/absent only:
+
+```
+[config] env      production
+[config] port     8080
+[config] database /data/loop.db
+[config] auth     ON (LOOP_PASSWORD set)
+[config] ai       ON (ANTHROPIC_API_KEY set)
+```
+
+Every supported variable is documented in `server/.env.example`. Locally, copy it to
+`server/.env` (gitignored) instead of exporting variables by hand:
+
+```bash
+cp server/.env.example server/.env
+```
+
 ```
 LOOP_PASSWORD=choose-a-long-random-string
 ANTHROPIC_API_KEY=sk-ant-...

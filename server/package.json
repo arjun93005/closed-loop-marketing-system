@@ -1,10 +1,16 @@
 {
-  "name": "server",
+  "name": "loop-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Loop — closed-loop marketing engine for solo SaaS founders",
+  "main": "server.js",
+  "private": true,
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check config.js",
+    "test": "echo \"No tests yet — added in step 3 (Vitest)\" && exit 1"
   },
   "keywords": [],
   "author": "",

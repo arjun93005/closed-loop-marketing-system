@@ -9,14 +9,28 @@ const express = require('express');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
 
-// Optionally load server/.env (gitignored) so secrets like ANTHROPIC_API_KEY
-// don't have to be typed inline. Silently skipped if no .env file exists.
-try { process.loadEnvFile(path.join(__dirname, '.env')); } catch { /* no .env — fine */ }
+// All configuration lives in ./config.js — the one place that reads the environment,
+// validates it, and refuses to boot on bad values. Nothing else in this file should
+// touch process.env.
+const configModule = require('./config');
 
-const PORT = process.env.PORT || 4070;
-const DB_PATH = path.join(__dirname, 'loop.db');
+configModule.loadEnvFile();   // read server/.env if present; the real env always wins
 
-const db = new DatabaseSync(DB_PATH);
+let config;
+try {
+  config = configModule.load();
+} catch (err) {
+  // A config error is fatal and actionable: print it plainly and stop. Exiting
+  // non-zero is what makes a bad deploy fail loudly instead of quietly serving
+  // traffic in a broken state.
+  console.error(`
+${err.message}
+`);
+  process.exit(1);
+}
+config.warnings.forEach(w => console.warn(`[config] ${w}`));
+
+const db = new DatabaseSync(config.dbPath);
 db.exec(`
   CREATE TABLE IF NOT EXISTS events (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -186,10 +200,10 @@ app.use((req, res, next) => {
 // PUBLIC endpoints (never require a password, because visitors' browsers hit them
 // with no way to send one): POST /collect and GET /loop.js. Everything else —
 // the dashboard and /api/* management/read routes — is protected.
-const LOOP_PASSWORD = process.env.LOOP_PASSWORD || null;
-if (!LOOP_PASSWORD) {
-  console.warn('[auth] LOOP_PASSWORD not set — dashboard and APIs are UNPROTECTED. Set it before hosting this anywhere public.');
-}
+// Validated in config.js: optional in development, but REQUIRED and >= 16 chars
+// when NODE_ENV=production, where a missing password aborts boot rather than
+// warning and then serving everything wide open.
+const LOOP_PASSWORD = config.password;
 const PUBLIC_PATHS = new Set(['/collect', '/loop.js']);
 
 app.use((req, res, next) => {
@@ -495,7 +509,7 @@ app.get('/api/script', (req, res) => {
 //
 // Requires ANTHROPIC_API_KEY in the environment. If absent, returns a clear error
 // rather than silently falling back, so it's obvious the AI path isn't wired up.
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || null;
+const ANTHROPIC_API_KEY = config.anthropicApiKey;
 const WARM_THRESHOLD_BETS = 3;      // need at least this many measured bets to "learn"
 const WARM_THRESHOLD_SIGNUPS = 5;   // ...and at least this many signups across them
 
@@ -731,4 +745,9 @@ app.get('/loop.js', (_req, res) => res.sendFile(path.join(__dirname, '..', 'snip
 app.get('/test', (_req, res) => res.sendFile(path.join(__dirname, 'test-page.html')));
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 
-app.listen(PORT, () => console.log(`Loop v1 running → http://localhost:${PORT}`));
+app.listen(config.port, () => {
+  // Boot summary: every effective setting, with secrets shown as present/absent
+  // only — never their values, because logs get copied into issues and chats.
+  configModule.describe(config).forEach(line => console.log(`[config] ${line}`));
+  console.log(`Loop v1 running → http://localhost:${config.port}`);
+});

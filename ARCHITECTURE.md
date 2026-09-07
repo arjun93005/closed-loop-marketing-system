@@ -169,8 +169,10 @@ PROTECTED (LOOP_PASSWORD, when set)
   GET  /             dashboard
   GET  /api/*        all reads and writes, including config
 
-UNPROTECTED WHEN LOOP_PASSWORD IS UNSET
-  everything above — the server warns at boot but still starts
+UNPROTECTED WHEN LOOP_PASSWORD IS UNSET (development only)
+  everything above — the server warns at boot but still starts.
+  Under NODE_ENV=production this configuration is refused: the server
+  exits with code 1 rather than starting wide open (see config.js).
 ```
 
 `/collect` being public and unauthenticated is a deliberate and necessary tradeoff, but
@@ -180,8 +182,10 @@ it means **anyone who knows a site name can write arbitrary events into that sit
 
 Recorded honestly, in the order we plan to address them:
 
-- **Config is not centralized.** `DEPLOY.md` documents a `LOOP_DB` variable the code does
-  not read; the DB path is hardcoded (`server.js:17`).
+- ~~**Config is not centralized.**~~ **FIXED.** All environment reading now lives in
+  `server/config.js`, validated and frozen at boot; the server exits with code 1 on bad
+  config. `LOOP_DB` is implemented, so following `DEPLOY.md` no longer silently destroys
+  data on redeploy.
 - **No test suite.** `npm test` exits 1.
 - **No error-handling middleware, no request logging, no `/health` endpoint.**
 - **Auth is a single shared password**, compared with `===` (not constant-time), and often
