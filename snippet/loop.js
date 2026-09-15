@@ -22,8 +22,24 @@
   })();
 
   var SITE = (script && script.getAttribute('data-site')) || 'default';
-  var ENDPOINT = (script && script.getAttribute('data-endpoint')) ||
-    (script && script.src ? script.src.replace(/\/loop\.js.*$/, '') + '/collect' : '/collect');
+  // var ENDPOINT = (script && script.getAttribute('data-endpoint')) ||
+  //   (script && script.src ? script.src.replace(/\/loop\.js.*$/, '') + '/collect' : '/collect');
+
+
+
+  var ENDPOINT = '/collect';
+
+  if (script) {
+    var customEndpoint = script.getAttribute('data-endpoint');
+
+    if (customEndpoint) {
+      ENDPOINT = customEndpoint;
+    } else if (script.src) {
+      var serverUrl = script.src.replace(/\/loop\.js.*$/, '');
+      ENDPOINT = serverUrl + '/collect';
+    }
+  }
+
 
   var LS = window.localStorage;
   var SESSION_WINDOW_MS = 30 * 60 * 1000;
