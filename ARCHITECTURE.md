@@ -197,3 +197,100 @@ Recorded honestly, in the order we plan to address them:
 - **N+1 query** in `betsWithResults()` — `db.prepare()` is called inside a loop.
 - **Conversion-event picker is half-wired**: `/api/insights` honors `?event=`, but
   `/api/recommendation` and `/api/script` ignore it and silently assume `signup`.
+
+
+flowchart LR
+    %% -------------------------
+    %% Visitor-side components
+    %% -------------------------
+    subgraph VISITOR["Visitor's Computer<br/>(Customer's Website)"]
+        script["&lt;script src=&quot;.../loop.js&quot;&gt;"]
+        loop["loop.js runs<br/>and builds an event"]
+    end
+
+    %% -------------------------
+    %% Founder dashboard
+    %% -------------------------
+    subgraph FOUNDER["Founder's Browser"]
+        dashboard["Dashboard"]
+    end
+
+    %% -------------------------
+    %% Server-side components
+    %% -------------------------
+    subgraph SERVER["Your Server<br/>(where server.js runs)"]
+        getLoop["GET /loop.js<br/>(server.js:744)"]
+        collect["POST /collect<br/>(server.js:226)"]
+        write["Write one row<br/>(server.js:234)"]
+        insights["GET /api/insights<br/>(counts, conversion rates)"]
+        config["config.js<br/>Reads process.env once at startup<br/>(PORT, LOOP_DB, LOOP_PASSWORD, ...)"]
+        database[("loop.db<br/>(file)")]
+    end
+
+    %% -------------------------
+    %% Event flow
+    %% -------------------------
+    script -->|"1. Download loop.js"| getLoop
+    getLoop -->|"loop.js response"| script
+
+    script --> loop
+    loop -->|"2. Send event"| collect
+
+    collect -->|"3. Write one row"| write
+    write --> database
+
+    %% -------------------------
+    %% Dashboard flow
+    %% -------------------------
+    dashboard -->|"4. Ask for insights"| insights
+    insights -->|"5. Read rows"| database
+    insights -->|"6. Return results"| dashboard
+
+    %% -------------------------
+    %% Configuration flow
+    %% -------------------------
+    config -.->|"Read once at startup"| getLoop
+    config -.->|"Configuration"| collect
+    config -.->|"Configuration"| insights
+
+    %% -------------------------
+    %% Styling
+    %% -------------------------
+    classDef browser fill:#1f2937,stroke:#9ca3af,color:#f9fafb;
+    classDef server fill:#172554,stroke:#60a5fa,color:#eff6ff;
+    classDef database fill:#3f2d20,stroke:#f59e0b,color:#fff7ed;
+    classDef config fill:#312e81,stroke:#a78bfa,color:#f5f3ff;
+
+    class script,loop,dashboard browser;
+    class getLoop,collect,write,insights server;
+    class database database;
+    class config config;
+
+
+    | `loop.js` writes | `server.js` reads | `loop.db` column |
+|---|---|---|
+| `site: SITE` | `b.site` | `site` |
+| `vid: visitorId` | `b.vid` | `vid` |
+| `type: type` | `b.type` | `type` |
+| `url: window.location.pathname` | `b.url` | `url` |
+| `ft: firstTouch` | `ft.source`, `ft.medium`... | `ft_source`, `ft_medium`... |
+| `ts: Date.now()` | `b.ts` | `ts` |
+
+
+HOW LOOP IS LOADED INTO VISITORS BROWSER AND TECHNIQUE TO SEND COLLECTED DATA FROM BROWSER TO DATABASE(INTERNAL CONNECTION BETWEEN loop.js and server.js (/collect end point))
+
+## Endpoint Resolution
+
+![Endpoint resolution flow](./images/endpoint-flow.png)
+
+## Request Flow
+
+![Request and server flow](./images/request-flow.png)
+
+Step 1: 
+
+Step 2: loop.js works out where to send data, then sends it.
+At loop.js:25-26 it takes the address it was downloaded from and swaps /loop.js for /collect. Downloaded from https://your-server.com/loop.js means it sends to https://your-server.com/collect. That's the whole connection: it reports back to wherever it came from. At loop.js:113 it sends the event: visitor ID, page, where they came from.
+
+Step 3: the server receives the event and writes it into loop.db.
+server.js:226 receives it, and server.js:234 writes one row into the order book.
