@@ -7,7 +7,8 @@
  */
 const express = require('express');
 const path = require('path');
-const { DatabaseSync } = require('node:sqlite');
+const { openDatabase } = require('./schema');                         // table definitions
+const { computeInsights, betsWithResults } = require('./insights');  // analytics logic
 
 // All configuration lives in ./config.js — the one place that reads the environment,
 // validates it, and refuses to boot on bad values. Nothing else in this file should
@@ -30,53 +31,9 @@ ${err.message}
 }
 config.warnings.forEach(w => console.warn(`[config] ${w}`));
 
-const db = new DatabaseSync(config.dbPath);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS events (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    site        TEXT NOT NULL,
-    vid         TEXT NOT NULL,
-    type        TEXT NOT NULL,
-    url         TEXT,
-    referrer    TEXT,
-    ft_source   TEXT, ft_medium TEXT, ft_campaign TEXT, ft_content TEXT, ft_landing TEXT,
-    lt_source   TEXT, lt_medium TEXT, lt_campaign TEXT, lt_content TEXT, lt_landing TEXT,
-    props       TEXT,
-    ts          INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_events_site_ts ON events (site, ts);
-  CREATE INDEX IF NOT EXISTS idx_events_vid ON events (vid);
-
-  -- Per-site GA4 forwarding config. One row per founder site, created/updated
-  -- via POST /api/config. Absence of a row means "GA4 forwarding off" for that site.
-  CREATE TABLE IF NOT EXISTS site_config (
-    site               TEXT PRIMARY KEY,
-    ga4_measurement_id TEXT,
-    ga4_api_secret     TEXT,
-    updated_at         INTEGER NOT NULL
-  );
-
-  -- Persisted approved scripts ("bets"). This is the memory the warm learning
-  -- loop reads from: each row is a script the founder approved, tagged with the
-  -- source/landing/campaign it targeted and the full script text. Signup results
-  -- are recomputed live from the events table by matching lt_campaign, so we
-  -- never store a stale count. Survives server restarts (fixes the old in-memory
-  -- approvals that were lost on restart).
-  CREATE TABLE IF NOT EXISTS bets (
-    id           INTEGER PRIMARY KEY AUTOINCREMENT,
-    site         TEXT NOT NULL,
-    campaign     TEXT NOT NULL,        -- utm_campaign used to measure this bet
-    source       TEXT,                 -- the audience/source this bet targeted
-    landing      TEXT,                 -- best-converting landing page at bet time
-    angle        TEXT,                 -- short label for the creative approach
-    hook         TEXT,
-    body         TEXT,
-    cta          TEXT,
-    full_script  TEXT,
-    approved_at  INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_bets_site ON bets (site, approved_at);
-`);
+// Opens the database file and creates any missing tables. The table definitions
+// live in ./schema.js so tests can build an identical in-memory database.
+const db = openDatabase(config.dbPath);
 
 const insertEvent = db.prepare(`
   INSERT INTO events (site, vid, type, url, referrer,
@@ -102,21 +59,7 @@ const insertBet = db.prepare(`
 `);
 const listBets = db.prepare(`SELECT * FROM bets WHERE site = ? ORDER BY approved_at ASC`);
 
-// For a given site, return each past bet joined with its LIVE measured result:
-// how many signups carried that bet's campaign in the 7 days after approval.
-// Recomputed every call so the "what worked" signal is never stale.
-function betsWithResults(site) {
-  const bets = listBets.all(site);
-  return bets.map(b => {
-    const windowEnd = b.approved_at + 7 * 86400000;
-    const r = db.prepare(`
-      SELECT COUNT(DISTINCT vid) AS signups FROM events
-      WHERE site = ? AND type = 'signup' AND lt_campaign = ?
-        AND ts >= ? AND ts <= ?
-    `).get(site, b.campaign, b.approved_at, windowEnd);
-    return { ...b, measured_signups: r.signups || 0 };
-  });
-}
+// betsWithResults() — each past bet with its live 7-day result — lives in ./insights.js.
 
 
 const app = express();
@@ -302,63 +245,12 @@ app.get('/api/config', (req, res) => {
 });
 
 // ---------- Insights ----------
-// Aggregates by FIRST-TOUCH source: which discovery channel produces signups.
-// A visitor counts once; they convert if they ever fired 'signup' in the window.
-function computeInsights(site, days, conversionEvent = 'signup') {
-  const since = Date.now() - days * 86400000;
-  const ev = String(conversionEvent || 'signup');
-  // The conversion event is a bind parameter (?), never string-interpolated, so a
-  // founder-named event like 'trial' or 'upgraded' can't inject SQL. The output
-  // field stays named `signups` so all downstream code is unchanged — it now means
-  // "count of the chosen conversion event".
-  const rows = db.prepare(`
-    SELECT
-      COALESCE(ft_source, 'direct')   AS source,
-      COUNT(DISTINCT vid)             AS visitors,
-      COUNT(DISTINCT CASE WHEN type = ? THEN vid END) AS signups
-    FROM events
-    WHERE site = ? AND ts >= ?
-    GROUP BY COALESCE(ft_source, 'direct')
-    ORDER BY signups DESC, visitors DESC
-  `).all(ev, site, since);
-
-  const totals = rows.reduce((a, r) => ({ visitors: a.visitors + r.visitors, signups: a.signups + r.signups }),
-    { visitors: 0, signups: 0 });
-  const siteRate = totals.visitors ? totals.signups / totals.visitors : 0;
-
-  const sources = rows.map(r => {
-    const rate = r.visitors ? r.signups / r.visitors : 0;
-    return {
-      source: r.source,
-      visitors: r.visitors,
-      signups: r.signups,
-      rate,
-      vsSite: siteRate > 0 ? rate / siteRate : null,
-      // anomaly: enough evidence (≥20 visitors or ≥2 conversions) and ≥2x site rate
-      anomaly: rate >= siteRate * 2 && rate > 0 && (r.visitors >= 20 || r.signups >= 2)
-    };
-  });
-
-  // Campaign/content breakdown for anomalous sources (the "why" drill-down)
-  const campaigns = db.prepare(`
-    SELECT COALESCE(ft_source,'direct') AS source,
-           COALESCE(ft_campaign,'(none)') AS campaign,
-           COALESCE(ft_landing,'/') AS landing,
-           COUNT(DISTINCT vid) AS visitors,
-           COUNT(DISTINCT CASE WHEN type = ? THEN vid END) AS signups
-    FROM events WHERE site = ? AND ts >= ?
-    GROUP BY 1, 2, 3 HAVING signups > 0
-    ORDER BY signups DESC LIMIT 20
-  `).all(ev, site, since);
-
-  return { site, days, conversionEvent: ev, totals: { ...totals, rate: siteRate }, sources, campaigns };
-}
-
+// computeInsights() — per-source visitors, signups and conversion — lives in ./insights.js.
 app.get('/api/insights', (req, res) => {
   const site = String(req.query.site || 'default');
   const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
   const event = req.query.event ? String(req.query.event) : 'signup';
-  res.json(computeInsights(site, days, event));
+  res.json(computeInsights(db, site, days, event));
 });
 
 // What event types has this site actually recorded, with counts? Lets the
@@ -380,7 +272,7 @@ app.get('/api/events', (req, res) => {
 app.get('/api/recommendation', (req, res) => {
   const site = String(req.query.site || 'default');
   const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
-  const ins = computeInsights(site, days);
+  const ins = computeInsights(db, site, days);
 
   if (ins.totals.signups < 3) {
     return res.json({
@@ -477,7 +369,7 @@ function generateScript(source, visitors, signups, rate, siteRate, days) {
 app.get('/api/script', (req, res) => {
   const site = String(req.query.site || 'default');
   const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
-  const ins = computeInsights(site, days);
+  const ins = computeInsights(db, site, days);
   
   // Check if we have enough data
   if (ins.totals.signups < 3) {
@@ -548,7 +440,7 @@ app.get('/api/generate-scripts', async (req, res) => {
     });
   }
 
-  const ins = computeInsights(site, days);
+  const ins = computeInsights(db, site, days);
   if (ins.totals.signups < 3) {
     return res.json({ status: 'insufficient_data', reason: `Only ${ins.totals.signups} signups; need 3+ before generating.` });
   }
@@ -566,7 +458,7 @@ app.get('/api/generate-scripts', async (req, res) => {
   const topLanding = drill ? drill.landing : null;
 
   // Decide cold vs warm from measured history.
-  const past = betsWithResults(site);
+  const past = betsWithResults(db, site);
   const totalMeasured = past.reduce((a, b) => a + b.measured_signups, 0);
   const isWarm = past.length >= WARM_THRESHOLD_BETS && totalMeasured >= WARM_THRESHOLD_SIGNUPS;
 
@@ -703,7 +595,7 @@ app.post('/api/approve', express.json(), (req, res) => {
 app.get('/api/bets', (req, res) => {
   const site = String(req.query.site || '');
   if (!site) return res.status(400).json({ error: 'site required' });
-  res.json({ site, bets: betsWithResults(site) });
+  res.json({ site, bets: betsWithResults(db, site) });
 });
 
 // All sites this server has ever seen (events or bets) — feeds the dashboard

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check config.js",
+    "check": "node --check server.js && node --check config.js && node --check schema.js && node --check insights.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
