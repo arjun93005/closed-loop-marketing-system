@@ -127,6 +127,20 @@ function forwardToGA4(siteConfig, event) {
   // require Google's separate (rate-limited) debug endpoint.
 }
 
+// ---------- Request logging (first, so every request is recorded) ----------
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    //2. log method, path, status code, duration
+    console.log(`[req] ${req.method} ${req.path} ${res.statusCode} ${ms}ms`);
+  });
+
+  // 3. let the request continue
+  next();
+});
+
 // CORS: the snippet posts from customer sites, so /collect must accept cross-origin.
 app.use((req, res, next) => {
   res.set('Access-Control-Allow-Origin', '*');
