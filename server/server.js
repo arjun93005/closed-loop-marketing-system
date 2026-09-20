@@ -141,13 +141,13 @@ app.use((req, res, next) => {
 // warning so this isn't a silent surprise in production.
 //
 // PUBLIC endpoints (never require a password, because visitors' browsers hit them
-// with no way to send one): POST /collect and GET /loop.js. Everything else —
+// with no way to send one): POST /collect, GET /loop.js, and GET /health. Everything else —
 // the dashboard and /api/* management/read routes — is protected.
 // Validated in config.js: optional in development, but REQUIRED and >= 16 chars
 // when NODE_ENV=production, where a missing password aborts boot rather than
 // warning and then serving everything wide open.
 const LOOP_PASSWORD = config.password;
-const PUBLIC_PATHS = new Set(['/collect', '/loop.js']);
+const PUBLIC_PATHS = new Set(['/collect', '/loop.js', '/health']);
 
 app.use((req, res, next) => {
   if (!LOOP_PASSWORD) return next();               // auth disabled
@@ -163,6 +163,11 @@ app.use((req, res, next) => {
   if (provided && provided === LOOP_PASSWORD) return next();
 
   res.status(401).json({ error: 'unauthorized', hint: 'Add ?key=YOUR_PASSWORD to the URL, or send Authorization: Bearer YOUR_PASSWORD.' });
+});
+// ---------- Health check ----------
+
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: Date.now() });
 });
 
 // ---------- Ingestion ----------
