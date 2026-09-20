@@ -178,6 +178,7 @@ app.get('/health', (_req, res) => {
   
 });
 
+
 // ---------- Ingestion ----------
 app.post('/collect', (req, res) => {
   const b = req.body || {};
@@ -614,6 +615,7 @@ app.get('/api/bets', (req, res) => {
 // All sites this server has ever seen (events or bets) — feeds the dashboard
 // dropdown so it no longer needs a hardcoded list.
 app.get('/api/sites', (_req, res) => {
+  // throw new Error('boom');
   const rows = db.prepare(`
     SELECT site FROM events GROUP BY site
     UNION
@@ -649,6 +651,13 @@ app.get('/api/measure', (req, res) => {
 app.get('/loop.js', (_req, res) => res.sendFile(path.join(__dirname, '..', 'snippet', 'loop.js')));
 app.get('/test', (_req, res) => res.sendFile(path.join(__dirname, 'test-page.html')));
 app.get('/', (_req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+
+// ---------- Error handling (must stay last, after every route) ----------
+app.use((err, req, res, next) => {
+  console.error('[error] unhandled error:', req.method, req.path, err.message);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ error: 'internal_error' });
+});
 
 app.listen(config.port, () => {
   // Boot summary: every effective setting, with secrets shown as present/absent
