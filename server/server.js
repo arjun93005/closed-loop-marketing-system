@@ -164,10 +164,18 @@ app.use((req, res, next) => {
 
   res.status(401).json({ error: 'unauthorized', hint: 'Add ?key=YOUR_PASSWORD to the URL, or send Authorization: Bearer YOUR_PASSWORD.' });
 });
-// ---------- Health check ----------
 
+// ---------- Health check ----------
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now() });
+  try{
+    db.prepare('SELECT 1').get();
+    res.json({ status: 'ok', timestamp: Date.now() });
+
+  }catch(err){
+    console.error('[health] database check failed:', err.message);
+    res.status(503).json({error: 'database_unavailable'});
+  }
+  
 });
 
 // ---------- Ingestion ----------
